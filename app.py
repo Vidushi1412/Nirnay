@@ -11,8 +11,7 @@ st.set_page_config(
 if "sidebar_open" not in st.session_state:
     st.session_state.sidebar_open = True
 
-toggle_label = "◀ Hide" if st.session_state.sidebar_open else "▶ Show"
-if st.button(toggle_label, key="sidebar_toggle"):
+if st.button("☰", key="sidebar_toggle"):
     st.session_state.sidebar_open = not st.session_state.sidebar_open
     st.rerun()
 
@@ -88,8 +87,7 @@ with st.sidebar:
            display:flex;align-items:center;justify-content:center;
            font-size:16px;font-weight:900;color:#fff">न</div>
       <div>
-        <div style="font-size:17px;font-weight:800;color:#dde3f0;
-             letter-spacing:-0.3px">निर्णय</div>
+        <div style="font-size:17px;font-weight:800;color:#dde3f0;">निर्णय</div>
         <div style="font-size:9px;color:#3d4f68;letter-spacing:2px;
              text-transform:uppercase">Decision Intelligence</div>
       </div>
@@ -152,19 +150,3 @@ with st.sidebar:
         10 datasets · 3 models each</div>
     </div>
     """, unsafe_allow_html=True)
-
-# ── Page routing ──────────────────────────────────────────────────────────────
-from pages import (overview, risk_monitor, decision_engine, simulation,
-                   whatif, analytics, rule_engine, human_review, reports)
-
-{
-    "🏠 Overview":          overview.render,
-    "⚠️ Risk Monitor":       risk_monitor.render,
-    "🎯 Decision Engine":   decision_engine.render,
-    "🔬 Simulation Studio": simulation.render,
-    "🔀 What-If Analysis":  whatif.render,
-    "📊 Analytics":         analytics.render,
-    "⚙️ Rule Engine":       rule_engine.render,
-    "✅ Human Review":      human_review.render,
-    "📋 Reports":           reports.render,
-}[page](selected_ds)
