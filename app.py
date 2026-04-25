@@ -1,4 +1,5 @@
 ﻿import streamlit as st
+from utils.data_engine import DATASETS, get_data
 
 st.set_page_config(
     page_title="निर्णय — Decision Intelligence",
@@ -7,7 +8,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Sidebar toggle ────────────────────────────────────────────────────────────
 if "sidebar_open" not in st.session_state:
     st.session_state.sidebar_open = True
 
@@ -29,14 +29,11 @@ section[data-testid="stSidebar"] {{
     min-width: {sidebar_width} !important;
     display: {sidebar_display} !important;
     transition: all 0.3s ease;
+    background-color: #0c1018 !important;
+    border-right: 1px solid rgba(255,255,255,0.06);
 }}
 [data-testid="collapsedControl"] {{
     display: none !important;
-}}
-
-[data-testid="stSidebar"] {{
-    background-color: #0c1018 !important;
-    border-right: 1px solid rgba(255,255,255,0.06);
 }}
 [data-testid="metric-container"] {{
     background: rgba(255,255,255,0.03);
@@ -44,7 +41,9 @@ section[data-testid="stSidebar"] {{
     border-radius: 10px;
     padding: 12px 16px;
 }}
-[data-testid="metric-container"] label {{ font-size: 12px !important; }}
+[data-testid="metric-container"] label {{
+    font-size: 12px !important;
+}}
 [data-testid="metric-container"] [data-testid="stMetricValue"] {{
     font-size: 24px !important;
     font-weight: 800 !important;
@@ -55,8 +54,13 @@ section[data-testid="stSidebar"] {{
     padding: 4px;
     border: 1px solid rgba(255,255,255,0.07);
 }}
-.stTabs [data-baseweb="tab"] {{ border-radius: 8px; font-weight: 500; }}
-.stTabs [aria-selected="true"] {{ background: rgba(79,110,247,0.2) !important; }}
+.stTabs [data-baseweb="tab"] {{
+    border-radius: 8px;
+    font-weight: 500;
+}}
+.stTabs [aria-selected="true"] {{
+    background: rgba(79,110,247,0.2) !important;
+}}
 .stButton > button {{
     background: rgba(79,110,247,0.15) !important;
     color: #818cf8 !important;
@@ -64,21 +68,22 @@ section[data-testid="stSidebar"] {{
     border-radius: 8px !important;
     font-weight: 600 !important;
 }}
-.stButton > button:hover {{ background: rgba(79,110,247,0.28) !important; }}
+.stButton > button:hover {{
+    background: rgba(79,110,247,0.28) !important;
+}}
 [data-testid="stDownloadButton"] > button {{
     background: linear-gradient(135deg,#4f6ef7,#7c3aed) !important;
     color: #fff !important;
     border: none !important;
     font-weight: 700 !important;
 }}
-h1,h2,h3 {{ color: #dde3f0 !important; }}
+h1, h2, h3 {{
+    color: #dde3f0 !important;
+}}
 </style>
 """, unsafe_allow_html=True)
 
-# ── Data ──────────────────────────────────────────────────────────────────────
-from utils.data_engine import DATASETS, get_data
-
-# ── Sidebar ───────────────────────────────────────────────────────────────────
+# ── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("""
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
@@ -87,7 +92,8 @@ with st.sidebar:
            display:flex;align-items:center;justify-content:center;
            font-size:16px;font-weight:900;color:#fff">न</div>
       <div>
-        <div style="font-size:17px;font-weight:800;color:#dde3f0;">निर्णय</div>
+        <div style="font-size:17px;font-weight:800;color:#dde3f0;
+             letter-spacing:-0.3px">निर्णय</div>
         <div style="font-size:9px;color:#3d4f68;letter-spacing:2px;
              text-transform:uppercase">Decision Intelligence</div>
       </div>
@@ -107,6 +113,7 @@ with st.sidebar:
     ], label_visibility="collapsed")
 
     st.divider()
+
     st.markdown(
         '<p style="color:#3d4f68;font-size:11px;font-weight:700;'
         'text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">'
@@ -140,6 +147,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     st.divider()
+
     st.markdown("""
     <div style="background:rgba(16,185,129,0.08);
          border:1px solid rgba(16,185,129,0.2);
@@ -150,3 +158,19 @@ with st.sidebar:
         10 datasets · 3 models each</div>
     </div>
     """, unsafe_allow_html=True)
+
+# ── PAGE ROUTING ──────────────────────────────────────────────────────────────
+from pages import (overview, risk_monitor, decision_engine, simulation,
+                   whatif, analytics, rule_engine, human_review, reports)
+
+{
+    "🏠 Overview":          overview.render,
+    "⚠️ Risk Monitor":       risk_monitor.render,
+    "🎯 Decision Engine":   decision_engine.render,
+    "🔬 Simulation Studio": simulation.render,
+    "🔀 What-If Analysis":  whatif.render,
+    "📊 Analytics":         analytics.render,
+    "⚙️ Rule Engine":       rule_engine.render,
+    "✅ Human Review":      human_review.render,
+    "📋 Reports":           reports.render,
+}[page](selected_ds)
