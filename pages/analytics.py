@@ -1,6 +1,5 @@
 import streamlit as st
 import plotly.graph_objects as go
-import plotly.express as px
 import pandas as pd
 from utils.data_engine import DATASETS, get_data, score_actions
 
@@ -8,6 +7,15 @@ CAT_FIELDS = ["city","state","sector","plan_type","loan_type","payment_method","
               "diagnosis","route_type","platform","geography","origin_city","insurance",
               "irrigation","focus_area","location_tier","project_stage","sector_type",
               "discharge_type","weather_risk","city_tier","policy_type"]
+
+
+def hex_to_rgba(hex_color, alpha=0.08):
+    """Convert hex color to rgba string safely."""
+    h = hex_color.lstrip("#")
+    if len(h) == 6:
+        r, g, b = int(h[0:2],16), int(h[2:4],16), int(h[4:6],16)
+        return f"rgba({r},{g},{b},{alpha})"
+    return f"rgba(79,110,247,{alpha})"
 
 
 def find_cat(df):
@@ -56,32 +64,43 @@ def render(ds_key: str):
                 texttemplate="%{text}%", textposition="outside",
                 marker=dict(cornerradius=4),
             ))
-            fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(255,255,255,0.02)",
-                               font=dict(color="#8892a4",size=10), height=240,
-                               margin=dict(l=0,r=0,t=10,b=0),
-                               xaxis=dict(gridcolor="rgba(255,255,255,0.03)"),
-                               yaxis=dict(title="Avg Risk %", gridcolor="rgba(255,255,255,0.05)"),
-                               showlegend=False)
+            fig.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(255,255,255,0.02)",
+                font=dict(color="#8892a4",size=10), height=240,
+                margin=dict(l=0,r=0,t=10,b=0),
+                xaxis=dict(gridcolor="rgba(255,255,255,0.03)"),
+                yaxis=dict(title="Avg Risk %", gridcolor="rgba(255,255,255,0.05)"),
+                showlegend=False
+            )
             st.plotly_chart(fig, use_container_width=True)
 
     with col_right:
         st.markdown("**Monthly Risk Trend (simulated)**")
         months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
         slices = [df.iloc[i::12]["risk_score"].mean()*100 for i in range(12)]
+
+        # Fix: use hex_to_rgba instead of string concatenation
+        fill_color = hex_to_rgba(meta["color"], 0.12)
+
         fig2 = go.Figure(go.Scatter(
-            x=months, y=[round(v,1) for v in slices],
+            x=months,
+            y=[round(v,1) for v in slices],
             mode="lines+markers",
             line=dict(color=meta["color"], width=2),
             marker=dict(size=5, color=meta["color"]),
             fill="tozeroy",
-            fillcolor=meta["color"]+"15",
+            fillcolor=fill_color,
         ))
-        fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(255,255,255,0.02)",
-                            font=dict(color="#8892a4",size=10), height=160,
-                            margin=dict(l=0,r=0,t=10,b=0),
-                            yaxis=dict(title="Avg Risk %", gridcolor="rgba(255,255,255,0.05)"),
-                            xaxis=dict(gridcolor="rgba(255,255,255,0.04)"),
-                            showlegend=False)
+        fig2.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(255,255,255,0.02)",
+            font=dict(color="#8892a4",size=10), height=160,
+            margin=dict(l=0,r=0,t=10,b=0),
+            yaxis=dict(title="Avg Risk %", gridcolor="rgba(255,255,255,0.05)"),
+            xaxis=dict(gridcolor="rgba(255,255,255,0.04)"),
+            showlegend=False
+        )
         st.plotly_chart(fig2, use_container_width=True)
 
         st.markdown("**Risk Distribution**")
@@ -93,13 +112,16 @@ def render(ds_key: str):
             textinfo="percent+label",
             textfont=dict(size=11, color="#dde3f0"),
         ))
-        fig3.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                            font=dict(color="#8892a4"), height=180,
-                            margin=dict(l=0,r=0,t=0,b=0),
-                            showlegend=False)
+        fig3.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#8892a4"), height=180,
+            margin=dict(l=0,r=0,t=0,b=0),
+            showlegend=False
+        )
         st.plotly_chart(fig3, use_container_width=True)
 
-    # Category deep-dive table
+    # Segment deep-dive
     if cat_field:
         st.divider()
         st.markdown(f"**Segment Deep-Dive by {cat_field.replace('_',' ').title()}**")
@@ -118,16 +140,16 @@ def render(ds_key: str):
     st.markdown("**Top 5 Critical Cases — Immediate Action Required**")
     top5 = df.sort_values("risk_score", ascending=False).head(5)
     for rank, (_, row) in enumerate(top5.iterrows(), 1):
-        rec = score_actions(row, ds_key).iloc[0]
+        rec  = score_actions(row, ds_key).iloc[0]
         rv_c = "#ef4444" if row["risk_level"]=="High" else "#f59e0b"
         st.markdown(f"""
         <div style="background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.12);
              border-radius:9px;padding:10px 14px;margin-bottom:7px;
              display:flex;justify-content:space-between;align-items:center">
           <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:22px;height:22px;border-radius:50%;background:rgba(239,68,68,0.15);
-                 display:flex;align-items:center;justify-content:center;
-                 font-size:10px;color:#f87171;font-weight:700">#{rank}</div>
+            <div style="width:22px;height:22px;border-radius:50%;
+                 background:rgba(239,68,68,0.15);display:flex;align-items:center;
+                 justify-content:center;font-size:10px;color:#f87171;font-weight:700">#{rank}</div>
             <div>
               <div style="font-size:13px;font-weight:600;color:#dde3f0">{row['label']}</div>
               <div style="font-size:10px;color:#3d4f68;font-family:monospace">{row['id']}</div>
