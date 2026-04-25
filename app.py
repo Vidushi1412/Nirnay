@@ -22,56 +22,67 @@ st.markdown("""
 [data-testid="collapsedControl"] {display: none !important;}
 section[data-testid="stSidebar"] {display: none !important;}
 .stApp {background-color: #07090f;}
-.block-container {padding: 0 !important; max-width: 100% !important;}
 
-/* Remove ALL column padding and gaps */
-[data-testid="column"] {padding: 0 !important;}
-[data-testid="stVerticalBlock"] {gap: 0rem !important;}
-[data-testid="stHorizontalBlock"] {gap: 0rem !important;}
-
-/* Remove gap above buttons */
-div[data-testid="stVerticalBlock"] > div {margin: 0 !important; padding: 0 !important;}
-
-/* All sidebar nav buttons */
-[data-testid="stBaseButton-secondary"] {
-    text-align: left !important;
-    justify-content: flex-start !important;
-    width: 100% !important;
-    background: transparent !important;
-    border: none !important;
-    color: #8892a4 !important;
+/* Remove all default streamlit spacing */
+.block-container {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    max-width: 100% !important;
+}
+[data-testid="stVerticalBlock"] {gap: 0 !important;}
+[data-testid="stHorizontalBlock"] {gap: 0 !important;}
+[data-testid="column"] {
+    padding: 0 !important;
+    gap: 0 !important;
+}
+/* Remove gap from every element inside columns */
+[data-testid="column"] > div {
+    gap: 0 !important;
+    padding: 0 !important;
+}
+[data-testid="column"] > div > div {
+    gap: 0 !important;
+}
+/* Remove margin from button wrappers */
+[data-testid="column"] .stButton {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+[data-testid="column"] .stButton > button {
+    margin: 0 !important;
     padding: 7px 10px !important;
     border-radius: 7px !important;
     font-size: 12.5px !important;
+    width: 100% !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    border: none !important;
+    background: transparent !important;
+    color: #8892a4 !important;
     font-weight: 400 !important;
-    margin: 0 !important;
 }
-[data-testid="stBaseButton-secondary"]:hover {
+[data-testid="column"] .stButton > button:hover {
     background: rgba(255,255,255,0.05) !important;
     color: #dde3f0 !important;
 }
+
+/* Active nav button */
 [data-testid="stBaseButton-primary"] {
-    text-align: left !important;
-    justify-content: flex-start !important;
-    width: 100% !important;
     background: rgba(79,110,247,0.15) !important;
     border: 1px solid rgba(79,110,247,0.3) !important;
     color: #818cf8 !important;
-    padding: 7px 10px !important;
-    border-radius: 7px !important;
-    font-size: 12.5px !important;
     font-weight: 700 !important;
-    margin: 0 !important;
 }
 
-/* Hamburger button */
-[data-testid="stBaseButton-secondary"].hamburger {
+/* Hamburger specifically */
+#hamburger_btn > button {
     background: rgba(79,110,247,0.15) !important;
     border: 1px solid rgba(79,110,247,0.3) !important;
     color: #818cf8 !important;
-    width: 38px !important;
-    padding: 6px !important;
     font-size: 18px !important;
+    padding: 4px 10px !important;
     text-align: center !important;
     justify-content: center !important;
 }
@@ -99,6 +110,7 @@ div[data-testid="stVerticalBlock"] > div {margin: 0 !important; padding: 0 !impo
     color: #fff !important; border: none !important; font-weight: 700 !important;
 }
 h1, h2, h3 {color: #dde3f0 !important;}
+p {color: #8892a4 !important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -109,32 +121,40 @@ else:
     sidebar_col, main_col = st.columns([0.001, 5])
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SIDEBAR
+# SIDEBAR COLUMN
 # ══════════════════════════════════════════════════════════════════════════════
 with sidebar_col:
     if st.session_state.sidebar_open:
 
+        # Everything inside one HTML block — no Streamlit gaps
         st.markdown("""
-        <div style="background:#0c1018;min-height:100vh;
-             border-right:1px solid rgba(255,255,255,0.07);
-             padding:12px 8px 12px 8px;">
-
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-            <div style="width:30px;height:30px;border-radius:8px;flex-shrink:0;
-                 background:linear-gradient(135deg,#4f6ef7,#7c3aed);
-                 display:flex;align-items:center;justify-content:center;
-                 font-size:13px;font-weight:900;color:#fff">न</div>
-            <div>
-              <div style="font-size:14px;font-weight:800;color:#dde3f0;">निर्णय</div>
-              <div style="font-size:8px;color:#3d4f68;letter-spacing:1.5px;
-                   text-transform:uppercase">Intelligence</div>
+        <div style="
+            background: #0c1018;
+            min-height: 100vh;
+            border-right: 1px solid rgba(255,255,255,0.07);
+            padding: 16px 10px 16px 12px;
+        ">
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:18px">
+                <div style="
+                    width:32px;height:32px;border-radius:8px;flex-shrink:0;
+                    background:linear-gradient(135deg,#4f6ef7,#7c3aed);
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:14px;font-weight:900;color:#fff;
+                ">न</div>
+                <div>
+                    <div style="font-size:15px;font-weight:800;color:#dde3f0;letter-spacing:-0.3px">
+                        निर्णय
+                    </div>
+                    <div style="font-size:8px;color:#3d4f68;letter-spacing:1.5px;text-transform:uppercase">
+                        Decision Intelligence
+                    </div>
+                </div>
             </div>
-          </div>
-
-          <div style="font-size:9px;color:#3d4f68;font-weight:700;
-               text-transform:uppercase;letter-spacing:.09em;margin-bottom:4px">
-            Navigation
-          </div>
+            <div style="
+                font-size:9px;color:#3d4f68;font-weight:700;
+                text-transform:uppercase;letter-spacing:.09em;
+                margin-bottom:6px;
+            ">Navigation</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -151,26 +171,22 @@ with sidebar_col:
         ]
 
         for p in pages:
-            if st.button(
-                p,
-                key=f"nav_{p}",
-                use_container_width=True,
-                type="primary" if st.session_state.page == p else "secondary"
-            ):
+            btn_type = "primary" if st.session_state.page == p else "secondary"
+            if st.button(p, key=f"nav_{p}", use_container_width=True, type=btn_type):
                 st.session_state.page = p
                 st.rerun()
 
-        st.markdown(
-            '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.07);'
-            'margin:10px 0 8px 0"/>',
-            unsafe_allow_html=True
-        )
-        st.markdown(
-            '<p style="color:#3d4f68;font-size:10px;font-weight:700;'
-            'text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">'
-            'Active Dataset</p>',
-            unsafe_allow_html=True
-        )
+        st.markdown("""
+        <div style="
+            height:1px;background:rgba(255,255,255,0.07);
+            margin:10px 0 8px 0;
+        "></div>
+        <p style="
+            color:#3d4f68;font-size:10px;font-weight:700;
+            text-transform:uppercase;letter-spacing:.08em;
+            margin-bottom:4px;
+        ">Active Dataset</p>
+        """, unsafe_allow_html=True)
 
         ds_labels = {k: f"{v['icon']} {v['name']}" for k, v in DATASETS.items()}
         new_ds = st.selectbox(
@@ -189,40 +205,47 @@ with sidebar_col:
         meta   = DATASETS[st.session_state.selected_ds]
 
         st.markdown(f"""
-        <div style="background:rgba(255,255,255,0.03);
-             border:1px solid rgba(255,255,255,0.07);
-             border-radius:9px;padding:9px 11px;margin-top:5px">
-          <div style="font-size:11px;color:{meta['color']};font-weight:700">{meta['sector']}</div>
-          <div style="font-size:10px;color:#3d4f68;margin-top:2px">{meta['records']:,} records</div>
-          <div style="font-size:10px;color:#ef4444;margin-top:2px;font-weight:600">{high_n} high-risk cases</div>
+        <div style="
+            background:rgba(255,255,255,0.03);
+            border:1px solid rgba(255,255,255,0.07);
+            border-radius:9px;padding:9px 11px;margin-top:5px;
+        ">
+            <div style="font-size:11px;color:{meta['color']};font-weight:700">{meta['sector']}</div>
+            <div style="font-size:10px;color:#3d4f68;margin-top:2px">{meta['records']:,} records</div>
+            <div style="font-size:10px;color:#ef4444;margin-top:2px;font-weight:600">{high_n} high-risk</div>
         </div>
-        <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);
-             border-radius:8px;padding:7px 10px;margin-top:8px">
-          <div style="font-size:10px;font-weight:700;color:#34d399">● All systems live</div>
-          <div style="font-size:9px;color:#3d4f68;margin-top:1px">10 datasets · 3 models each</div>
+        <div style="
+            background:rgba(16,185,129,0.08);
+            border:1px solid rgba(16,185,129,0.2);
+            border-radius:8px;padding:7px 10px;margin-top:8px;
+        ">
+            <div style="font-size:10px;font-weight:700;color:#34d399">● All systems live</div>
+            <div style="font-size:9px;color:#3d4f68;margin-top:1px">10 datasets · 3 models each</div>
         </div>
         """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# MAIN CONTENT
+# MAIN COLUMN
 # ══════════════════════════════════════════════════════════════════════════════
 with main_col:
 
-    # Top bar — hamburger only, no text
-    st.markdown("""
-    <div style="background:#0a0f1e;border-bottom:1px solid rgba(255,255,255,0.06);
-         padding:8px 16px;display:flex;align-items:center;gap:12px;">
-    </div>
-    """, unsafe_allow_html=True)
-
-    hcol, _ = st.columns([0.05, 0.95])
+    # Hamburger top bar
+    hcol, spacer = st.columns([0.055, 0.945])
     with hcol:
         if st.button("☰", key="hamburger_btn"):
             st.session_state.sidebar_open = not st.session_state.sidebar_open
             st.rerun()
 
-    # Page content
-    st.markdown('<div style="padding:16px 22px">', unsafe_allow_html=True)
+    # Divider line under top bar
+    st.markdown("""
+    <div style="
+        height:1px;background:rgba(255,255,255,0.06);
+        margin:0 0 16px 0;
+    "></div>
+    """, unsafe_allow_html=True)
+
+    # Page content with padding
+    st.markdown('<div style="padding:0 22px">', unsafe_allow_html=True)
 
     from pages import (overview, risk_monitor, decision_engine, simulation,
                        whatif, analytics, rule_engine, human_review, reports)
