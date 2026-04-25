@@ -1,0 +1,47 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+env/
+.env/
+.venv/
+
+# Git
+.git/
+.gitignore
+
+# Dev / IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Test artifacts
+.pytest_cache/
+*.pytest_cache
+coverage/
+.coverage
+htmlcov/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Logs
+*.log
+logs/
+
+# Docs (not needed at runtime)
+README.md
+docs/
+
+# CI/CD
+.github/
+.travis.yml
