@@ -8,85 +8,61 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-if "sidebar_open" not in st.session_state:
-    st.session_state.sidebar_open = True
-
-if st.button("☰", key="sidebar_toggle"):
-    st.session_state.sidebar_open = not st.session_state.sidebar_open
-    st.rerun()
-
-sidebar_width = "240px" if st.session_state.sidebar_open else "0px"
-sidebar_display = "block" if st.session_state.sidebar_open else "none"
-
-st.markdown(f"""
+st.markdown("""
 <style>
-#MainMenu, footer, header {{visibility: hidden;}}
-.stDeployButton {{display: none;}}
-.stApp {{ background-color: #07090f; }}
-
-section[data-testid="stSidebar"] {{
-    width: {sidebar_width} !important;
-    min-width: {sidebar_width} !important;
-    display: {sidebar_display} !important;
-    transition: all 0.3s ease;
+#MainMenu, footer, header {visibility: hidden;}
+.stDeployButton {display: none;}
+.stApp { background-color: #07090f; }
+section[data-testid="stSidebar"] {
     background-color: #0c1018 !important;
     border-right: 1px solid rgba(255,255,255,0.06);
-}}
-[data-testid="collapsedControl"] {{
-    display: none !important;
-}}
-[data-testid="metric-container"] {{
+}
+[data-testid="metric-container"] {
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.07);
     border-radius: 10px;
     padding: 12px 16px;
-}}
-[data-testid="metric-container"] label {{
-    font-size: 12px !important;
-}}
-[data-testid="metric-container"] [data-testid="stMetricValue"] {{
-    font-size: 24px !important;
-    font-weight: 800 !important;
-}}
-.stTabs [data-baseweb="tab-list"] {{
+}
+[data-testid="metric-container"] label { font-size: 12px !important; }
+[data-testid="metric-container"] [data-testid="stMetricValue"] {
+    font-size: 24px !important; font-weight: 800 !important;
+}
+.stTabs [data-baseweb="tab-list"] {
     background: rgba(255,255,255,0.03);
-    border-radius: 10px;
-    padding: 4px;
+    border-radius: 10px; padding: 4px;
     border: 1px solid rgba(255,255,255,0.07);
-}}
-.stTabs [data-baseweb="tab"] {{
-    border-radius: 8px;
-    font-weight: 500;
-}}
-.stTabs [aria-selected="true"] {{
-    background: rgba(79,110,247,0.2) !important;
-}}
-.stButton > button {{
+}
+.stTabs [data-baseweb="tab"] { border-radius: 8px; font-weight: 500; }
+.stTabs [aria-selected="true"] { background: rgba(79,110,247,0.2) !important; }
+.stButton > button {
     background: rgba(79,110,247,0.15) !important;
     color: #818cf8 !important;
     border: 1px solid rgba(79,110,247,0.3) !important;
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-}}
-.stButton > button:hover {{
-    background: rgba(79,110,247,0.28) !important;
-}}
-[data-testid="stDownloadButton"] > button {{
+    border-radius: 8px !important; font-weight: 600 !important;
+}
+.stButton > button:hover { background: rgba(79,110,247,0.28) !important; }
+[data-testid="stDownloadButton"] > button {
     background: linear-gradient(135deg,#4f6ef7,#7c3aed) !important;
-    color: #fff !important;
-    border: none !important;
-    font-weight: 700 !important;
-}}
-h1, h2, h3 {{
-    color: #dde3f0 !important;
-}}
+    color:#fff !important; border:none !important; font-weight:700 !important;
+}
+h1, h2, h3 { color: #dde3f0 !important; }
+
+/* Hamburger toggle button styling */
+[data-testid="stSidebar"] [data-testid="collapsedControl"] {
+    display: none !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
+
+    # Hamburger close button inside sidebar
+    if st.button("☰", key="close_sidebar"):
+        st.session_state.sidebar_open = False
+
     st.markdown("""
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;margin-top:8px">
       <div style="width:36px;height:36px;border-radius:9px;
            background:linear-gradient(135deg,#4f6ef7,#7c3aed);
            display:flex;align-items:center;justify-content:center;
@@ -159,11 +135,15 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
+# ── MAIN AREA hamburger to open ───────────────────────────────────────────────
+if st.button("☰", key="open_sidebar"):
+    st.session_state.sidebar_open = True
+
 # ── PAGE ROUTING ──────────────────────────────────────────────────────────────
 from pages import (overview, risk_monitor, decision_engine, simulation,
                    whatif, analytics, rule_engine, human_review, reports)
 
-{
+page_map = {
     "🏠 Overview":          overview.render,
     "⚠️ Risk Monitor":       risk_monitor.render,
     "🎯 Decision Engine":   decision_engine.render,
@@ -173,4 +153,6 @@ from pages import (overview, risk_monitor, decision_engine, simulation,
     "⚙️ Rule Engine":       rule_engine.render,
     "✅ Human Review":      human_review.render,
     "📋 Reports":           reports.render,
-}[page](selected_ds)
+}
+
+page_map[page](selected_ds)
