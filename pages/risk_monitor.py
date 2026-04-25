@@ -68,7 +68,7 @@ def render(ds_key: str):
         if val == "Medium": return "color: #fbbf24; font-weight: 600"
         return "color: #34d399; font-weight: 600"
 
-    styled = disp_df.style.applymap(color_level, subset=["Level"])
+    styled = disp_df.style.map(color_level, subset=["Level"])
     st.dataframe(styled, use_container_width=True, height=440, hide_index=True)
 
     st.caption(f"Showing {len(disp_df)} of {len(filtered)} filtered records")
