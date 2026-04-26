@@ -110,7 +110,7 @@ with sidebar_col:
 
         # Brand — single markdown, directly at top
         st.markdown("""
-        <div style="padding:16px 14px 8px 16px;display:flex;
+        <div style="padding:16px 20px 8px 20px;display:flex;
              align-items:center;gap:9px;">
           <div style="width:32px;height:32px;border-radius:8px;flex-shrink:0;
                background:linear-gradient(135deg,#4f6ef7,#7c3aed);
