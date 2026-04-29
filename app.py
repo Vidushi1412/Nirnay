@@ -1,5 +1,6 @@
 import streamlit as st
 from utils.data_engine import DATASETS, get_data
+from utils.auth import is_logged_in, current_user, is_admin, render_login_page
 
 st.set_page_config(
     page_title="निर्णय — Decision Intelligence",
@@ -8,12 +9,21 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+# ── Show login if not authenticated ──────────────────────────────────────────
+if not is_logged_in():
+    render_login_page()
+    st.stop()
+
+# ── Session state ─────────────────────────────────────────────────────────────
 if "sidebar_open" not in st.session_state:
     st.session_state.sidebar_open = True
 if "page" not in st.session_state:
-    st.session_state.page = "🏠 Overview"
+    st.session_state.page = "📈 Dashboard"
 if "selected_ds" not in st.session_state:
     st.session_state.selected_ds = "telecom"
+
+user  = current_user()
+email = st.session_state.get("user_email","guest@nirnay.ai")
 
 st.markdown("""
 <style>
@@ -22,22 +32,15 @@ st.markdown("""
 [data-testid="collapsedControl"] {display: none !important;}
 section[data-testid="stSidebar"] {display: none !important;}
 .stApp {background-color: #07090f;}
-.block-container {
-    padding: 0 !important;
-    max-width: 100% !important;
-}
+.block-container {padding: 0 !important; max-width: 100% !important;}
 [data-testid="stVerticalBlock"] {gap: 0 !important;}
 [data-testid="stHorizontalBlock"] {gap: 0 !important;}
 [data-testid="column"] {padding: 0 !important;}
-
-/* Sidebar column background */
 [data-testid="column"]:first-child {
     background: #0c1018 !important;
     border-right: 1px solid rgba(255,255,255,0.07) !important;
     min-height: 100vh !important;
 }
-
-/* Nav buttons */
 [data-testid="stBaseButton-secondary"] {
     width: 100% !important;
     text-align: left !important;
@@ -69,13 +72,10 @@ section[data-testid="stSidebar"] {display: none !important;}
     margin: 1px 0 !important;
     border-radius: 7px !important;
 }
-
-/* Metrics */
 [data-testid="metric-container"] {
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 10px;
-    padding: 12px 16px;
+    border-radius: 10px; padding: 12px 16px;
 }
 [data-testid="metric-container"] label {font-size: 12px !important;}
 [data-testid="metric-container"] [data-testid="stMetricValue"] {
@@ -90,46 +90,42 @@ section[data-testid="stSidebar"] {display: none !important;}
 .stTabs [aria-selected="true"] {background: rgba(79,110,247,0.2) !important;}
 [data-testid="stDownloadButton"] > button {
     background: linear-gradient(135deg,#4f6ef7,#7c3aed) !important;
-    color: #fff !important; border: none !important; font-weight: 700 !important;
+    color:#fff !important; border:none !important; font-weight:700 !important;
 }
-h1, h2, h3 {color: #dde3f0 !important;}
+h1,h2,h3 {color:#dde3f0 !important;}
 </style>
 """, unsafe_allow_html=True)
 
-# ── COLUMNS ───────────────────────────────────────────────────────────────────
+# ── LAYOUT ───────────────────────────────────────────────────────────────────
 if st.session_state.sidebar_open:
     sidebar_col, main_col = st.columns([1, 5])
 else:
     sidebar_col, main_col = st.columns([0.001, 5])
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SIDEBAR — NO HTML before buttons, everything top to bottom in order
+# SIDEBAR
 # ══════════════════════════════════════════════════════════════════════════════
 with sidebar_col:
     if st.session_state.sidebar_open:
 
-        # Brand — single markdown, directly at top
-        st.markdown("""
-        <div style="padding:16px 20px 8px 20px;display:flex;
-             align-items:center;gap:9px;">
+        st.markdown(f"""
+        <div style="padding:16px 14px 8px 20px;display:flex;align-items:center;gap:9px;">
           <div style="width:32px;height:32px;border-radius:8px;flex-shrink:0;
                background:linear-gradient(135deg,#4f6ef7,#7c3aed);
                display:flex;align-items:center;justify-content:center;
                font-size:14px;font-weight:900;color:#fff;">न</div>
           <div>
-            <div style="font-size:15px;font-weight:800;color:#dde3f0;
-                 letter-spacing:-0.3px;">निर्णय</div>
-            <div style="font-size:8px;color:#3d4f68;letter-spacing:1.5px;
-                 text-transform:uppercase;">Decision Intelligence</div>
+            <div style="font-size:15px;font-weight:800;color:#dde3f0;letter-spacing:-0.3px;">निर्णय</div>
+            <div style="font-size:8px;color:#3d4f68;letter-spacing:1.5px;text-transform:uppercase;">
+              Decision Intelligence</div>
           </div>
         </div>
-        <div style="font-size:9px;color:#3d4f68;font-weight:700;
-             text-transform:uppercase;letter-spacing:.09em;
-             padding:4px 16px 4px 16px;">Navigation</div>
+        <div style="font-size:9px;color:#3d4f68;font-weight:700;text-transform:uppercase;
+             letter-spacing:.09em;padding:8px 20px 4px 20px;">Navigation</div>
         """, unsafe_allow_html=True)
 
-        # Nav buttons — immediately after, no gap
         pages = [
+            "📈 Dashboard",
             "🏠 Overview",
             "⚠️ Risk Monitor",
             "🎯 Decision Engine",
@@ -139,29 +135,26 @@ with sidebar_col:
             "⚙️ Rule Engine",
             "✅ Human Review",
             "📋 Reports",
+            "📂 Upload Data",
+            "📌 Action Tracker",
+            "🔔 Alert Settings",
         ]
 
         for p in pages:
             btn_type = "primary" if st.session_state.page == p else "secondary"
-            if st.button(p, key=f"nav_{p}",
-                         use_container_width=True,
-                         type=btn_type):
+            if st.button(p, key=f"nav_{p}", use_container_width=True, type=btn_type):
                 st.session_state.page = p
                 st.rerun()
 
-        # Divider + dataset
         st.markdown("""
-        <div style="height:1px;background:rgba(255,255,255,0.07);
-             margin:8px 14px;"></div>
-        <div style="font-size:9px;color:#3d4f68;font-weight:700;
-             text-transform:uppercase;letter-spacing:.08em;
-             padding:0 14px;margin-bottom:4px;">Active Dataset</div>
+        <div style="height:1px;background:rgba(255,255,255,0.07);margin:8px 14px;"></div>
+        <div style="font-size:9px;color:#3d4f68;font-weight:700;text-transform:uppercase;
+             letter-spacing:.08em;padding:0 14px;margin-bottom:4px;">Active Dataset</div>
         """, unsafe_allow_html=True)
 
         ds_labels = {k: f"{v['icon']} {v['name']}" for k, v in DATASETS.items()}
         new_ds = st.selectbox(
-            "ds",
-            list(ds_labels.keys()),
+            "ds", list(ds_labels.keys()),
             index=list(ds_labels.keys()).index(st.session_state.selected_ds),
             format_func=lambda k: ds_labels[k],
             label_visibility="collapsed",
@@ -176,59 +169,78 @@ with sidebar_col:
 
         st.markdown(f"""
         <div style="padding:0 10px;">
-          <div style="background:rgba(255,255,255,0.03);
-               border:1px solid rgba(255,255,255,0.07);
+          <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);
                border-radius:9px;padding:9px 11px;margin-top:5px;">
-            <div style="font-size:11px;color:{meta['color']};font-weight:700;">
-              {meta['sector']}</div>
-            <div style="font-size:10px;color:#3d4f68;margin-top:2px;">
-              {meta['records']:,} records</div>
-            <div style="font-size:10px;color:#ef4444;margin-top:2px;font-weight:600;">
-              {high_n} high-risk cases</div>
+            <div style="font-size:11px;color:{meta['color']};font-weight:700;">{meta['sector']}</div>
+            <div style="font-size:10px;color:#3d4f68;margin-top:2px;">{meta['records']:,} records</div>
+            <div style="font-size:10px;color:#ef4444;margin-top:2px;font-weight:600;">{high_n} high-risk</div>
           </div>
-          <div style="background:rgba(16,185,129,0.08);
-               border:1px solid rgba(16,185,129,0.2);
-               border-radius:8px;padding:7px 10px;margin-top:8px;">
-            <div style="font-size:10px;font-weight:700;color:#34d399;">
-              ● All systems live</div>
-            <div style="font-size:9px;color:#3d4f68;margin-top:1px;">
-              10 datasets · 3 models each</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+        <div style="height:1px;background:rgba(255,255,255,0.07);margin:8px 14px;"></div>
+        """, unsafe_allow_html=True)
+
+        # User info + logout
+        st.markdown(f"""
+        <div style="padding:0 10px;margin-bottom:8px;">
+          <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);
+               border-radius:9px;padding:9px 11px;">
+            <div style="font-size:11px;font-weight:700;color:#dde3f0;">{user['name']}</div>
+            <div style="font-size:10px;color:#3d4f68;margin-top:1px;">{user['role']}</div>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("🚪 Logout", key="logout_btn", use_container_width=True):
+            st.session_state.user = None
+            st.session_state.user_email = None
+            st.rerun()
+
+        st.markdown("""
+        <div style="padding:0 10px;">
+          <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);
+               border-radius:8px;padding:7px 10px;">
+            <div style="font-size:10px;font-weight:700;color:#34d399;">● All systems live</div>
+            <div style="font-size:9px;color:#3d4f68;margin-top:1px;">10 datasets · 3 models each</div>
           </div>
         </div>
         """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# MAIN COLUMN
+# MAIN CONTENT
 # ══════════════════════════════════════════════════════════════════════════════
 with main_col:
 
-    # Hamburger at very top
     hcol, _ = st.columns([0.06, 0.94])
     with hcol:
         if st.button("☰", key="hamburger_btn"):
             st.session_state.sidebar_open = not st.session_state.sidebar_open
             st.rerun()
 
-    st.markdown("""
-    <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);
-    margin:4px 0 16px 0;"/>
-    """, unsafe_allow_html=True)
-
+    st.markdown('<hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:4px 0 16px 0;"/>', unsafe_allow_html=True)
     st.markdown('<div style="padding:0 24px">', unsafe_allow_html=True)
 
     from pages import (overview, risk_monitor, decision_engine, simulation,
                        whatif, analytics, rule_engine, human_review, reports)
+    from utils import csv_upload, action_tracker, alerts, kpi_dashboard
 
-    {
-        "🏠 Overview":          overview.render,
-        "⚠️ Risk Monitor":       risk_monitor.render,
-        "🎯 Decision Engine":   decision_engine.render,
-        "🔬 Simulation Studio": simulation.render,
-        "🔀 What-If Analysis":  whatif.render,
-        "📊 Analytics":         analytics.render,
-        "⚙️ Rule Engine":       rule_engine.render,
-        "✅ Human Review":      human_review.render,
-        "📋 Reports":           reports.render,
-    }[st.session_state.page](st.session_state.selected_ds)
+    pg = st.session_state.page
+    ds = st.session_state.selected_ds
+
+    if   pg == "📈 Dashboard":        kpi_dashboard.render(email, ds)
+    elif pg == "🏠 Overview":          overview.render(ds)
+    elif pg == "⚠️ Risk Monitor":       risk_monitor.render(ds)
+    elif pg == "🎯 Decision Engine":   decision_engine.render(ds)
+    elif pg == "🔬 Simulation Studio": simulation.render(ds)
+    elif pg == "🔀 What-If Analysis":  whatif.render(ds)
+    elif pg == "📊 Analytics":         analytics.render(ds)
+    elif pg == "⚙️ Rule Engine":       rule_engine.render(ds)
+    elif pg == "✅ Human Review":      human_review.render(ds)
+    elif pg == "📋 Reports":           reports.render(ds)
+    elif pg == "📂 Upload Data":       csv_upload.render(email)
+    elif pg == "📌 Action Tracker":    action_tracker.render(email)
+    elif pg == "🔔 Alert Settings":    alerts.render(email)
 
     st.markdown('</div>', unsafe_allow_html=True)
