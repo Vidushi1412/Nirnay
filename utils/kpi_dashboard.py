@@ -94,7 +94,7 @@ def render(email: str, ds_key: str):
             line=dict(color=meta["color"], width=2),
             marker=dict(size=5, color=meta["color"]),
             fill="tozeroy",
-            fillcolor=meta["color"]+"22",
+            fillcolor="rgba(79,110,247,0.12)",
         ))
         fig2.update_layout(
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(255,255,255,0.02)",
