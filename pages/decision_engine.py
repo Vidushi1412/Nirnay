@@ -1,16 +1,17 @@
 import streamlit as st
 import plotly.graph_objects as go
 from utils.data_engine import DATASETS, get_data, score_actions
+from utils.action_tracker import log_action
 
 
 def render(ds_key: str):
     meta = DATASETS[ds_key]
     df   = get_data(ds_key)
+    email = st.session_state.get("user_email","guest@nirnay.ai")
 
     st.markdown(f"## 🎯 Decision Engine")
     st.caption("AI-ranked actions with cost, ROI, and decision reasoning")
 
-    # Record selector
     options = [f"{row['id']} — {row['label']} ({round(row['risk_score']*100)}% risk)"
                for _, row in df.head(80).iterrows()]
     sel_label = st.selectbox("Select record", options)
@@ -21,20 +22,18 @@ def render(ds_key: str):
     level  = row["risk_level"]
     ranked = score_actions(row, ds_key)
 
-    color_map = {"High": "#ef4444", "Medium": "#f59e0b", "Low": "#10b981"}
-    tag_map   = {"High": "🔴", "Medium": "🟡", "Low": "🟢"}
+    color_map = {"High":"#ef4444","Medium":"#f59e0b","Low":"#10b981"}
     rv_color  = color_map[level]
 
     col_left, col_right = st.columns([1, 1])
 
-    # ── LEFT: record info + feature importance ───────────────────────────────
     with col_left:
         st.markdown(f"""
         <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);
              border-radius:10px;padding:16px;margin-bottom:12px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start">
             <div>
-              <div style="font-size:15px;font-weight:700;color:#dde3f0">{row['label']}</div>
+              <div style="font-size:14px;font-weight:700;color:#dde3f0">{row['label']}</div>
               <div style="font-size:10px;color:#3d4f68;font-family:monospace;margin-top:2px">{row['id']}</div>
             </div>
             <div style="text-align:right">
@@ -48,20 +47,19 @@ def render(ds_key: str):
 
         feat_cols = [c for c in df.columns if c not in ("id","label","risk_score","risk_level")]
         st.markdown("**Record details**")
-        info_data = {c: row[c] for c in feat_cols[:8]}
-        for k, v in info_data.items():
-            st.markdown(f'<span style="color:#3d4f68;font-size:12px">{k.replace("_"," ").title()}: </span>'
-                        f'<span style="color:#dde3f0;font-size:12px;font-weight:500">{v}</span>',
-                        unsafe_allow_html=True)
+        for f in feat_cols[:8]:
+            st.markdown(
+                f'<span style="color:#3d4f68;font-size:12px">{f.replace("_"," ").title()}: </span>'
+                f'<span style="color:#dde3f0;font-size:12px;font-weight:500">{row[f]}</span>',
+                unsafe_allow_html=True
+            )
 
         st.divider()
-        st.markdown("**Feature Importance (RF proxy)**")
-        # Deterministic pseudo-importances from seed
+        st.markdown("**Feature Importance**")
         imp_vals = [round(0.08 + (((i*7+hash(row['id']))%100)/100)*0.42, 3) for i in range(len(feat_cols[:6]))]
         total_imp = sum(imp_vals)
         imp_norm  = [v/total_imp for v in imp_vals]
         imp_sorted = sorted(zip(feat_cols[:6], imp_norm), key=lambda x: -x[1])
-
         fig_imp = go.Figure(go.Bar(
             x=[round(v*100,1) for _,v in imp_sorted],
             y=[c.replace("_"," ").title() for c,_ in imp_sorted],
@@ -70,23 +68,20 @@ def render(ds_key: str):
         ))
         fig_imp.update_layout(
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#8892a4", size=11), height=200,
-            margin=dict(l=0, r=0, t=0, b=0),
+            font=dict(color="#8892a4",size=11), height=200,
+            margin=dict(l=0,r=0,t=0,b=0),
             xaxis=dict(title="Importance %", gridcolor="rgba(255,255,255,0.05)"),
             yaxis=dict(gridcolor="rgba(0,0,0,0)"),
         )
         st.plotly_chart(fig_imp, use_container_width=True)
 
-    # ── RIGHT: action recommendations ────────────────────────────────────────
     with col_right:
         st.markdown("**Recommended Actions**")
-
-        action_colors = ["#10b981","#4f6ef7","#3b82f6","#f59e0b","#6b7280"]
         for i, (_, a) in enumerate(ranked.iterrows()):
             is_best = i == 0
             border  = "rgba(79,110,247,0.4)" if is_best else "rgba(255,255,255,0.08)"
             bg      = "rgba(79,110,247,0.1)"  if is_best else "rgba(255,255,255,0.025)"
-            best_tag= '<span style="font-size:9px;background:rgba(16,185,129,0.2);color:#34d399;border:1px solid rgba(16,185,129,0.3);padding:1px 6px;border-radius:3px;font-weight:700;margin-right:6px">BEST</span>' if is_best else ""
+            best_tag = '<span style="font-size:9px;background:rgba(16,185,129,0.2);color:#34d399;border:1px solid rgba(16,185,129,0.3);padding:1px 6px;border-radius:3px;font-weight:700;margin-right:6px">BEST</span>' if is_best else ""
             st.markdown(f"""
             <div style="background:{bg};border:1px solid {border};border-radius:9px;
                  padding:12px 14px;margin-bottom:8px">
@@ -103,38 +98,42 @@ def render(ds_key: str):
             </div>
             """, unsafe_allow_html=True)
 
-        # Reasoning
         top = ranked.iloc[0]
         st.markdown(f"""
         <div style="background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);
-             border-radius:10px;padding:14px;margin-top:4px">
+             border-radius:10px;padding:14px;margin-top:4px;margin-bottom:12px">
           <div style="font-size:10px;font-weight:700;color:#34d399;text-transform:uppercase;
                letter-spacing:.06em;margin-bottom:5px">Decision Reasoning</div>
           <p style="font-size:12.5px;color:#dde3f0;line-height:1.65;margin:0">
-            <b style="color:{rv_color}">{level} risk</b> case ({round(risk*100)}%).
-            <b style="color:{top['color']}">{top['label']}</b> is recommended because it delivers a
-            <b style="color:#10b981">−{top['expected_impact']}pt</b> risk reduction at ₹{top['cost']:,} cost
-            with an estimated ROI of <b style="color:#818cf8">{'+' if top['roi']>=0 else ''}{top['roi']}%</b>.
-            {"Intervention is economically justified." if top['id'] != 'no_action' else "Monitoring is sufficient — marginal benefit is low."}
+            <b style="color:{rv_color}">{level} risk</b> ({round(risk*100)}%).
+            <b style="color:{top['color']}">{top['label']}</b> recommended —
+            delivers <b style="color:#10b981">−{top['expected_impact']}pt</b> risk reduction
+            at ₹{top['cost']:,} with ROI
+            <b style="color:#818cf8">{'+' if top['roi']>=0 else ''}{top['roi']}%</b>.
           </p>
         </div>
         """, unsafe_allow_html=True)
 
-        # Action comparison chart
-        st.divider()
-        st.markdown("**Cost vs Impact comparison**")
-        fig_a = go.Figure()
-        fig_a.add_trace(go.Bar(
-            name="Impact (risk pts)",
-            x=ranked["label"],
-            y=ranked["expected_impact"],
-            marker_color=[a["color"] for a in ranked.to_dict("records")],
-        ))
-        fig_a.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(255,255,255,0.02)",
-            font=dict(color="#8892a4",size=10), height=180,
-            margin=dict(l=0,r=0,t=0,b=0),
-            xaxis=dict(tickangle=-20),
-            yaxis=dict(title="Risk pts", gridcolor="rgba(255,255,255,0.05)"),
-        )
-        st.plotly_chart(fig_a, use_container_width=True)
+        # ── Log Action button ─────────────────────────────────────────────────
+        st.markdown("**📌 Log This Action**")
+        with st.form(key=f"log_form_{sel_id}"):
+            selected_action = st.selectbox(
+                "Action to execute",
+                options=[a["label"] for _, a in ranked.iterrows()],
+                key=f"sel_action_{sel_id}"
+            )
+            action_row = ranked[ranked["label"] == selected_action].iloc[0]
+            notes = st.text_area("Notes (optional)", placeholder="e.g. Called customer, offered discount", height=60)
+            submitted = st.form_submit_button("📌 Log Action", use_container_width=True, type="primary")
+            if submitted:
+                log_action(
+                    email=email,
+                    record_id=row["id"],
+                    record_label=row["label"],
+                    dataset=DATASETS[ds_key]["name"],
+                    action=selected_action,
+                    risk_before=float(risk),
+                    cost=float(action_row["cost"]),
+                    notes=notes,
+                )
+                st.success(f"✅ Action logged! Track it in **Action Tracker**.")
